@@ -1,7 +1,10 @@
 from pattern import Checker, Circle, Spectrum
+from generator import ImageGenerator
 
 
 def main():
+
+    # Tests to check if pattern functions work
     checker = Checker(12, 3)
     checker.draw()
     checker.show()
