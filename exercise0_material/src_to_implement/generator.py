@@ -21,7 +21,7 @@ class ImageGenerator:
         self.class_dict = {0: 'airplane', 1: 'automobile', 2: 'bird', 3: 'cat', 4: 'deer', 5: 'dog', 6: 'frog',
                            7: 'horse', 8: 'ship', 9: 'truck'}
         self.epoch = 0
-        self.index = 0
+        self.index = -1
         self.labels = self.load_labels()
         self.image_paths = self.load_image_paths()
 
@@ -52,12 +52,9 @@ class ImageGenerator:
         np.random.shuffle(keys)
         shuffled_labels = {key: self.labels[key] for key in keys}
         self.labels = shuffled_labels
+        self.image_paths = self.load_image_paths()
 
     def next(self):
-        # This function creates a batch of images and corresponding labels and returns them.
-        # In this context a "batch" of images just means a bunch, say 10 images that are forwarded at once.
-        # Note that your amount of total data might not be divisible without remainder with the batch_size.
-        # Think about how to handle such cases
         start = self.index
         end = min(self.index + self.batch_size, len(self.labels))
 
@@ -66,7 +63,8 @@ class ImageGenerator:
             self.shuffle_data()
 
         images = self.load_images(start, end)
-        labels = np.array([self.labels[str(index)] for index in range(start, end)])
+        values = list(self.labels.values())
+        labels = np.array(values[start:end])
 
         if end < self.index + self.batch_size:
             self.shuffle_data()
@@ -74,7 +72,8 @@ class ImageGenerator:
             start = 0
             end = self.batch_size + self.index - len(self.labels)
             images = np.append(images, self.load_images(start, end), axis=0)
-            labels = np.append(labels, np.array([self.labels[str(index)] for index in range(start, end)]))
+            values = list(self.labels.values())
+            labels = np.append(labels, np.array(values[start:end]), axis=0)
 
         self.index = (self.index + self.batch_size) % len(self.labels)
         return images, labels
