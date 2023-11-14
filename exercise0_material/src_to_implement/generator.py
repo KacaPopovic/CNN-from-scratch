@@ -103,15 +103,16 @@ class ImageGenerator:
     def show(self):
         images, labels = self.next()
         image_number = len(images)
-        row_number = np.ceil(np.sqrt(image_number))
-        col_number = image_number // row_number
+        row_number =int( np.ceil(np.sqrt(image_number)))
+        col_number = int(image_number // row_number)
         plt.figure()
-        count = 0
+        count = 1
         for i in range(row_number):
             for j in range(col_number):
-                plt.subplot(i, j, count)
+                plt.subplot(row_number, col_number, count)
                 plt.imshow(images[count])
                 title = self.class_name(labels[count])
                 plt.title(title)
                 count += 1
+        plt.tight_layout()
         plt.show()
