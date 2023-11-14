@@ -18,7 +18,7 @@ def main():
     spectrum.show()
     file_path = "./data/exercise_data"
     label_path = "./data/labels.json"
-    generator = ImageGenerator(file_path, label_path, 10, (300,300))
+    generator = ImageGenerator(file_path, label_path, 10, (300, 300))
     generator.show()
 
 
