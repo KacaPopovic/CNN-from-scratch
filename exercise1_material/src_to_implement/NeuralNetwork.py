@@ -1,12 +1,12 @@
 import copy
 
 class NeuralNetwork:
-    def __int__(self, optimizer, loss: list, layers, data_layer, loss_layer):
+    def __int__(self, optimizer):
         self.optimizer = optimizer
-        self.loss = loss
-        self.layers = layers
-        self.data_layer = data_layer
-        self.loss_layer = loss_layer
+        self.loss = None
+        self.layers = None
+        self.data_layer = None
+        self.loss_layer = None
         self.label_tensor = None
 
     def forward(self):
