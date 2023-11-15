@@ -1,7 +1,7 @@
 import copy
 
 class NeuralNetwork:
-    def __int__(self, optimizer):
+    def __init__(self, optimizer):
         self.optimizer = optimizer
         self.loss = None
         self.layers = None
@@ -25,7 +25,7 @@ class NeuralNetwork:
         return error_tensor
 
     def append_layer(self, layer):
-        if layer.Trainable:
+        if layer.trainable:
             optimizor_copy = copy.deepcopy(self.optimizer)
             layer.optimizer(optimizor_copy)
         self.layers.append(layer)

@@ -19,6 +19,14 @@ class SoftMax(BaseLayer):
     def backward(self, error_tensor):
 
         # Todo check if this makes sense
-        jacobian_matrix = self.output_tensor * (np.eye(self.output_tensor.shape[1]) - self.output_tensor.T)
-        prev_error_tensor = np.dot(error_tensor, jacobian_matrix)
+        #temp = np.diagflat(self.output_tensor) - self.output_tensor.T
+        #jacobian_matrix = np.dot(self.output_tensor,temp)
+        enum = np.arange(error_tensor.shape[0])
+        z= np.zeros_like(error_tensor)
+
+        for i in enum:
+            x=error_tensor[i,:]
+            y= self.output_tensor[i,:].T
+            z[i,:] = x*y
+        prev_error_tensor = self.output_tensor * (error_tensor - z)
         return prev_error_tensor
