@@ -4,7 +4,7 @@ import numpy as np
 
 class ReLU(BaseLayer):
     def _init_(self):
-        super()._init_()
+        super().__init__()
         self.input_tensor = None
 
     def forward(self, input_tensor):

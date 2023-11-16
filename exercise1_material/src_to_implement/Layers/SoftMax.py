@@ -8,6 +8,8 @@ class SoftMax(BaseLayer):
         self.output_tensor = None
 
     def forward(self, input_tensor):
+
+        #todo proveri
         input_tensor = input_tensor - np.max(input_tensor, axis=1).reshape(-1, 1)
         exp_tensor = np.exp(input_tensor)
         sums = np.sum(exp_tensor, axis=1)
