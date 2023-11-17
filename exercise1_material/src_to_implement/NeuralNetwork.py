@@ -23,7 +23,7 @@ class NeuralNetwork:
         #loss = self.layers[-1].forward(input_tensor, label_tensor)
         output_tensor = input_tensor
         #predicted_class = np.argmax(output_tensor, axis=1)
-        self.current_loss = self.loss_layer.forward(self.label_tensor, output_tensor)
+        self.current_loss = self.loss_layer.forward(output_tensor, self.label_tensor)
         return self.current_loss
 
     def backward(self):
@@ -45,8 +45,8 @@ class NeuralNetwork:
             self.backward()
 
     def test(self, input_tensor):
-        for i in range(len(self.layers)-1):
+        for i in range(len(self.layers)):
             input_tensor = self.layers[i].forward(input_tensor)
-        probabilities = input_tensor
-        return probabilities
+        output_tensor = input_tensor
+        return output_tensor
 

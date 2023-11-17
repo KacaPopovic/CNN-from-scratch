@@ -1,16 +1,20 @@
-import numpy as np
 
 import numpy as np
 
 # Example arrays
 array1 = np.random.randint(1, 6, size=(9, 5))  # Random integers between 1 and 5
 array2 = np.random.randint(1, 6, size=(9, 5))
-print(array1)
-# Element-wise multiplication and sum along axis 1
-result_vector = np.sum(array1 * array2, axis=1, keepdims=True)
 
-# Print the result
-print(result_vector)
+prediction_tensor = np.random.randint(1, 10, size=(4,4))/10
+print("Pred tensor:")
+print(prediction_tensor)
+label_tensor = np.eye(4,4)
+eps = np.finfo(float).eps
 
-subst = array1 - result_vector
-print(subst)
+print("Label tensor: ")
+print(label_tensor)
+eps = np.finfo(float).eps
+neg_log_probs = -np.log(prediction_tensor + eps)
+loss = np.sum(neg_log_probs * label_tensor)
+print("loss")
+print(loss)
