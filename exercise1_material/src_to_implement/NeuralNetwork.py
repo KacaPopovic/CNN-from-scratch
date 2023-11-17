@@ -27,7 +27,7 @@ class NeuralNetwork:
         return self.current_loss
 
     def backward(self):
-        error_tensor = self.layers[-1].backward(self.label_tensor)
+        error_tensor = self.loss_layer.backward(self.label_tensor)
         for i in range(len(self.layers)-1, -1, -1):
             error_tensor = self.layers[i].backward(error_tensor)
         return error_tensor
