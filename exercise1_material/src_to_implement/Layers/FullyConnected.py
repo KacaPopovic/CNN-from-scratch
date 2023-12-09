@@ -18,7 +18,7 @@ class FullyConnected(BaseLayer):
         super().__init__()
         self.trainable = True
         # bias is included in the weights, so the size is increased by 1
-        self.weights = np.random.rand(input_size + 1, output_size)
+        self.weights = None
         self._optimizer = None
         self.input_tensor = None
         self.gradient_tensor = None
@@ -93,3 +93,9 @@ class FullyConnected(BaseLayer):
         """
         # TODO check if this makes sense
         return self.gradient_tensor
+
+    def initialize(self, weights_initializer, bias_initializer):
+        weights = weights_initializer.initialize()
+        bias = bias_initializer.initialize()
+        self.weights = np.vstack(weights, bias)
+

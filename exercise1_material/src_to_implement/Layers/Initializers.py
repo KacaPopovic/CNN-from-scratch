@@ -24,7 +24,7 @@ class Xavier:
         pass
 
     def initialize(self, weights_shape, fan_in, fan_out):
-        std = np.sqrt(1/np.mean(fan_in, fan_out))
+        std = np.sqrt(2/(fan_in + fan_out))
         init_weights = np.random.normal(0, std, weights_shape)
         return init_weights
 
@@ -37,4 +37,3 @@ class He:
         std = np.sqrt(2 / fan_in)
         init_weights = np.random.normal(0, std, weights_shape)
         return init_weights
-    
