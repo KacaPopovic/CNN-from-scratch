@@ -18,6 +18,7 @@ class Conv(BaseLayer):
         self.padding_shape = None
         self._weights_optimizer = None
         self._bias_optimizer = None
+        self.input_tensor = None
 
     @property
     def optimizer(self):
@@ -36,71 +37,72 @@ class Conv(BaseLayer):
     def gradient_bias(self):
         return self._gradient_bias
 
-    def forward1(self, input_tensor):
-        # input tensor dimensions: B x C x Y x X
-        # convolution shape = C x M x N
-        # stride shape = single val or tuple
-
-        # TODO proveri jel ovo sme
-        if len(input_tensor.shape) == 3:
-            input_tensor = np.expand_dims(input_tensor, axis=3)
-        b, c, y, x = input_tensor.shape
-        if len(self.convolution_shape) == 2:
-            convolution_shape = np.expand_dims(self.convolution_shape, axis=2)
-        else:
-            convolution_shape = self.convolution_shape
-        if len(self.stride_shape) == 1:
-            self.stride_shape = (self.stride_shape,)
-        padding_y = int((self.stride_shape[0] * (y - 1) + convolution_shape[1] - y) / 2)
-        padding_x = int((self.stride_shape[1] * (x - 1) + convolution_shape[2] - x) / 2)
-
-        # Calculate output dimensions
-        y_output = int((y + 2 * padding_y - self.convolution_shape[1]) / self.stride_shape[0] + 1)
-        x_output = int((x + 2 * padding_x - self.convolution_shape[2]) / self.stride_shape[1] + 1)
-
-        output_shape = (b, self.num_kernels, y_output, x_output)
-
-        self.padding_shape = [padding_y, padding_x]
-        # todo make this work for even number kernel size
-        additional_padding_y = 0
-        additional_padding_x = 0
-        if self.convolution_shape[1]%2==0:
-            additional_padding_y = 1
-        if self.convolution_shape[2]%2==0:
-            additional_padding_x = 1
-        padded_input = np.pad(input_tensor, ((0, 0), (0, 0), (self.padding_shape[0], self.padding_shape[0] + additional_padding_y),(self.padding_shape[1], self.padding_shape[1] + additional_padding_x)), mode='constant')
-        output = np.zeros(output_shape)
-        for i in range(b):
-            for j in range(self.num_kernels):
-                output[i, j, :, :] = correlate(padded_input[i, :, :, :], self.weights[j, :, :, :],
-                                               mode='valid')[:,::self.stride_shape[0],::self.stride_shape[1]] + self.bias[j]
-        return output
-
     def forward(self, input_tensor):
+        self.input_tensor = input_tensor
         if len(input_tensor.shape) == 3:
             input_tensor = np.expand_dims(input_tensor, axis=3)
+            expanded = True
+        else:
+            expanded = False
         b, c, y, x = input_tensor.shape
         if len(self.convolution_shape) == 2:
-            convolution_shape = np.expand_dims(self.convolution_shape, axis=2)
+            convolution_shape = self.convolution_shape + (1,)
         else:
             convolution_shape = self.convolution_shape
         if len(self.stride_shape) == 1:
-            self.stride_shape = (self.stride_shape,)
+            stride_shape = self.stride_shape * 2
+        else:
+            stride_shape = self.stride_shape
+
+        if self.weights.ndim == 3:
+            weights = np.expand_dims(self.weights, axis=-1)
+        else:
+            weights = self.weights
 
         output_tensor = np.zeros([b, self.num_kernels, y, x])
 
         for i in range(b):
             for k in range(self.num_kernels):
                 for channel in range(c):
-                    curr_input_tensor = input_tensor[i, channel]
-                    curr_weights = self.weights[k, channel]
-                    curr_output_tensor = output_tensor[i,k,:,:]
-                    output_tensor[i, k, :, :] = correlate(input_tensor[i, channel, :, :], self.weights[k, channel, :, :], mode="same", method="direct")
+                    output_tensor[i, k, :, :] += correlate(input_tensor[i, channel, :, :], weights[k, channel, :, :], mode="same", method="direct")
+                output_tensor[i,k,:,:] += self.bias[k]
+
+        output_tensor = output_tensor[:,:,::stride_shape[0],::stride_shape[1]]
+
+        if expanded:
+            output_tensor = np.squeeze(output_tensor, axis=-1)
         return output_tensor
 
     def initialize(self, weight_initializer, bias_initializer):
-        self.weights = weight_initializer.initialize(self.weights.shape, self.convolution_shape[0], self.num_kernels)
-        self.bias = bias_initializer.initialize(self.bias.shape, self.convolution_shape[0], self.num_kernels)
+        fan_in = np.prod(self.convolution_shape)
+        fan_out = self.num_kernels * np.prod(self.convolution_shape[1:])
+        self.weights = weight_initializer.initialize(self.weights.shape, fan_in, fan_out)
+        self.bias = bias_initializer.initialize(self.bias.shape, fan_in, fan_out)
+
+    def calculate_weights_gradient(self, error_tensor):
+        if len(error_tensor.shape) == 3:
+            error_tensor = np.expand_dims(error_tensor, axis=3)
+            expanded = True
+        else:
+            expanded = False
+        b, c, y, x = error_tensor.shape
+        if len(self.stride_shape) == 1:
+            stride_shape = self.stride_shape * 2
+        else:
+            stride_shape = self.stride_shape
+        if len(self.convolution_shape) == 2:
+            convolution_shape = self.convolution_shape + (1,)
+        else:
+            convolution_shape = self.convolution_shape
+        if self.weights.ndim == 3:
+            weights = np.expand_dims(self.weights, axis=-1)
+        else:
+            weights = self.weights
+
+        gradient_tensor = np.zeros(shape=convolution_shape)
+
+
+
 
     def backward(self, error_tensor):
         pass
