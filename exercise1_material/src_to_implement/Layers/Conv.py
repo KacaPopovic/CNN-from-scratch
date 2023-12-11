@@ -99,7 +99,7 @@ class Conv(BaseLayer):
             bias_gradient_tensor[i] = np.sum(error_tensor[:, i, :, :])
         return weights_gradient_tensor, bias_gradient_tensor
 
-    def upsample_error_tensor(self, error_tensor, input_tensor):
+    def upsample_error_tensor1(self, error_tensor, input_tensor):
         _, _, height, width = input_tensor.shape
         batch_size, channels, reduced_height, reduced_width = error_tensor.shape
 
@@ -113,6 +113,29 @@ class Conv(BaseLayer):
             for c in range(channels):
                 error_tensor_upsampled[b, c, :, :] = zoom(error_tensor[b, c, :, :], (scale_factor_y, scale_factor_x),
                                                           order=1)  # bilinear interpolation
+
+        return error_tensor_upsampled
+
+    def upsample_error_tensor(self, error_tensor, input_tensor):
+        stride_shape = self.stride_shape
+        if len(self.stride_shape) == 1:
+            stride_shape = self.stride_shape * 2
+        _, _, height, width = input_tensor.shape
+        batch_size, channels, reduced_height, reduced_width = error_tensor.shape
+
+        scale_factor_y = stride_shape[0]
+        scale_factor_x = stride_shape[1]
+
+        error_tensor_upsampled = np.zeros(shape=(batch_size, channels, height, width))
+
+        # Fill the upscaled tensor with the original error values at the correct positions
+        for b in range(batch_size):
+            for c in range(channels):
+                for y in range(reduced_height):
+                    for x in range(reduced_width):
+                        new_y = y * scale_factor_y
+                        new_x = x * scale_factor_x
+                        error_tensor_upsampled[b, c, new_y, new_x] = error_tensor[b, c, y, x]
 
         return error_tensor_upsampled
 
