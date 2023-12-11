@@ -124,7 +124,6 @@ class Conv(BaseLayer):
                     previous_error_tensor[b, k, :, :] += convolve(error_tensor[b, channel, :, :],
                                                                   flipped_weights[k, channel, :, :], mode="same")
 
-        # TODO decide if you will squeeze here
         return previous_error_tensor
 
     def backward(self, error_tensor):
