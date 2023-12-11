@@ -4,6 +4,7 @@ from scipy.signal import correlate, convolve
 import copy
 from scipy.ndimage import zoom
 
+
 class Conv(BaseLayer):
     def __init__(self, stride_shape, convolution_shape, num_kernels):
         super().__init__()
@@ -64,10 +65,11 @@ class Conv(BaseLayer):
         for i in range(b):
             for k in range(self.num_kernels):
                 for channel in range(c):
-                    output_tensor[i, k, :, :] += correlate(input_tensor[i, channel, :, :], weights[k, channel, :, :], mode="same", method="direct")
-                output_tensor[i,k,:,:] += self.bias[k]
+                    output_tensor[i, k, :, :] += correlate(input_tensor[i, channel, :, :], weights[k, channel, :, :],
+                                                           mode="same", method="direct")
+                output_tensor[i, k, :, :] += self.bias[k]
 
-        output_tensor = output_tensor[:,:,::stride_shape[0],::stride_shape[1]]
+        output_tensor = output_tensor[:, :, ::stride_shape[0], ::stride_shape[1]]
 
         if expanded:
             output_tensor = np.squeeze(output_tensor, axis=-1)
@@ -83,7 +85,7 @@ class Conv(BaseLayer):
 
         error_tensor = self.upsample_error_tensor(error_tensor, input_tensor)
         weights_gradient_tensor = np.zeros_like(weights)
-        bias_gradient_tensor = np.zeros(shape =error_tensor.shape[1])
+        bias_gradient_tensor = np.zeros(shape=error_tensor.shape[1])
 
         # TODO dodaj even
         padding_y = (convolution_shape[1] - 1) // 2, convolution_shape[1] // 2
@@ -92,9 +94,9 @@ class Conv(BaseLayer):
         for i in range(error_tensor.shape[1]):
             for j in range(input_tensor.shape[1]):
                 for b in range(input_tensor.shape[0]):
-                    temp = convolve(padded_input_tensor[b,j,:,:], error_tensor[b,i,:,:], mode="valid")
-                    weights_gradient_tensor[i, j, : , :] += convolve(padded_input_tensor[b,j,:,:], error_tensor[b,i,:,:], mode="valid")
-            bias_gradient_tensor[i] = np.sum(error_tensor[:,i,:,:])
+                    weights_gradient_tensor[i, j, :, :] += convolve(padded_input_tensor[b, j, :, :],
+                                                                    error_tensor[b, i, :, :], mode="valid")
+            bias_gradient_tensor[i] = np.sum(error_tensor[:, i, :, :])
         return weights_gradient_tensor, bias_gradient_tensor
 
     def upsample_error_tensor(self, error_tensor, input_tensor):
@@ -104,7 +106,7 @@ class Conv(BaseLayer):
         scale_factor_y = height / reduced_height
         scale_factor_x = width / reduced_width
 
-        error_tensor_upsampled = np.zeros(shape=(batch_size,channels,height,width))
+        error_tensor_upsampled = np.zeros(shape=(batch_size, channels, height, width))
 
         # Upsample each batch and channel independently
         for b in range(batch_size):
@@ -135,10 +137,7 @@ class Conv(BaseLayer):
             expanded = False
         if len(error_tensor.shape) == 3:
             error_tensor = np.expand_dims(error_tensor, axis=3)
-            expanded = True
-        else:
-            expanded = False
-        b, c, y, x = error_tensor.shape
+
         if len(self.stride_shape) == 1:
             stride_shape = self.stride_shape * 2
         else:
@@ -153,11 +152,15 @@ class Conv(BaseLayer):
             weights = self.weights
 
         previous_error_tensor = self.calculate_prev_error_tensor(error_tensor, input_tensor, convolution_shape, weights)
-        weights_gradient_tensor, bias_gradient_tensor = self.calculate_gradients(error_tensor, input_tensor, convolution_shape, weights)
+        weights_gradient_tensor, bias_gradient_tensor = self.calculate_gradients(error_tensor, input_tensor,
+                                                                                 convolution_shape, weights)
 
         if expanded:
-            weights_gradient_tensor = np.squeeze(weights_gradient_tensor, axis=-1)
-            previous_error_tensor = np.squeeze(previous_error_tensor, axis=-1)
+                weights_gradient_tensor = np.squeeze(weights_gradient_tensor, axis=-1)
+                previous_error_tensor = np.squeeze(previous_error_tensor, axis=-1)
+
+        self._gradient_weights = weights_gradient_tensor
+        self._gradient_bias = bias_gradient_tensor
 
         if self._weights_optimizer:
             self.weights = self._weights_optimizer.calculate_update(self.weights, weights_gradient_tensor)
