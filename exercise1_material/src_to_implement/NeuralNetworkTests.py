@@ -867,6 +867,7 @@ class TestPooling(unittest.TestCase):
     def test_gradient_overlapping_stride(self):
         label_tensor = np.random.random((self.batch_size, 24))
         self.layers[0] = Pooling.Pooling((2, 1), (2, 2))
+
         difference = Helpers.gradient_check(self.layers, self.input_tensor, label_tensor)
         self.assertLessEqual(np.sum(difference), 1e-6,
                              "Possible reason: If the tests for the forward pass fail as well, fix those first. If they"
