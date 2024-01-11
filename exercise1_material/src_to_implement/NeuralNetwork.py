@@ -26,6 +26,16 @@ class NeuralNetwork:
         self.label_tensor = None
         self.current_loss = None
 
+    @property
+    def phase(self):
+        # Todo maybe we need getter in layers
+        return self.layers[0].testing_phase
+
+    @phase.setter
+    def phase(self, phase):
+        for layer in self.layers:
+            layer.testing_phase = phase
+
     def forward(self):
         """
         Passes input data forward through all the layers of our neural network.
@@ -55,6 +65,10 @@ class NeuralNetwork:
         error_tensor = self.loss_layer.backward(self.label_tensor)
         # We go backward through all the layers and propagate the error.
         for i in range(len(self.layers)-1, -1, -1):
+            if self.layers[i].optimizer:
+                if self.layers[i].optimizer.regularizer:
+                    # todo da li mora da se proveri trainable
+                    error_tensor += self.layers[i].optimizer.regularizer.norm(self.layers[i].weights)
             error_tensor = self.layers[i].backward(error_tensor)
         return error_tensor
 
@@ -86,6 +100,7 @@ class NeuralNetwork:
             None
         """
         # We save the loss calculated in each iteration.
+        self.phase(False)
         for i in range(iterations):
             loss = self.forward()
             self.loss.append(loss)
@@ -102,7 +117,9 @@ class NeuralNetwork:
             np.ndarray: Tensor with predicted probabilities.
         """
         # We propagate the input tensor through all the layers.
+        self.phase(True)
         for i in range(len(self.layers)):
             input_tensor = self.layers[i].forward(input_tensor)
         output_tensor = input_tensor
         return output_tensor
+
