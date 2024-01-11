@@ -194,3 +194,31 @@ On the UCI ML hand-written digits dataset, we achieve an accuracy of: 93.4891485
 On the Iris dataset, we achieve an accuracy of: 94.0%
 On the Iris dataset, we achieve an accuracy of: 100.0%
 On the Iris dataset, we achieve an accuracy of: 100.0%
+On the UCI ML hand-written digits dataset, we achieve an accuracy of: 92.65442404006677%
+On the Iris dataset, we achieve an accuracy of: 98.0%
+On the Iris dataset, we achieve an accuracy of: 96.0%
+On the Iris dataset, we achieve an accuracy of: 96.0%
+On the UCI ML hand-written digits dataset, we achieve an accuracy of: 92.65442404006677%
+On the Iris dataset, we achieve an accuracy of: 96.0%
+On the Iris dataset, we achieve an accuracy of: 96.0%
+On the Iris dataset, we achieve an accuracy of: 100.0%
+On the UCI ML hand-written digits dataset, we achieve an accuracy of: 92.15358931552588%
+On the Iris dataset, we achieve an accuracy of: 94.0%
+On the Iris dataset, we achieve an accuracy of: 96.0%
+On the Iris dataset, we achieve an accuracy of: 100.0%
+On the UCI ML hand-written digits dataset, we achieve an accuracy of: 91.48580968280467%
+On the Iris dataset, we achieve an accuracy of: 96.0%
+On the Iris dataset, we achieve an accuracy of: 94.0%
+On the Iris dataset, we achieve an accuracy of: 96.0%
+On the UCI ML hand-written digits dataset, we achieve an accuracy of: 93.15525876460768%
+On the Iris dataset, we achieve an accuracy of: 100.0%
+On the Iris dataset, we achieve an accuracy of: 96.0%
+On the Iris dataset, we achieve an accuracy of: 98.0%
+On the UCI ML hand-written digits dataset, we achieve an accuracy of: 92.65442404006677%
+On the Iris dataset, we achieve an accuracy of: 100.0%
+On the Iris dataset, we achieve an accuracy of: 94.0%
+On the Iris dataset, we achieve an accuracy of: 96.0%
+On the UCI ML hand-written digits dataset, we achieve an accuracy of: 94.99165275459099%
+On the Iris dataset, we achieve an accuracy of: 100.0%
+On the Iris dataset, we achieve an accuracy of: 100.0%
+On the Iris dataset, we achieve an accuracy of: 98.0%
