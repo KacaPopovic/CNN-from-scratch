@@ -101,3 +101,8 @@ class FullyConnected(BaseLayer):
         biases = bias_initializer.initialize((1, output_size), 1, output_size)
         self.weights = np.vstack((weights, biases))
 
+    def optimize(self, gradient_tensor):
+        if self.optimizer:
+            updated_weight_tensor = self.optimizer.calculate_update(self.weights, gradient_tensor)
+            self.weights = updated_weight_tensor
+

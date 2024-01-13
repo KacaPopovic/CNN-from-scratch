@@ -12,6 +12,6 @@ class Sigmoid(BaseLayer):
         return self.activations
 
     def backward(self, error_tensor):
-        gradient = self.activations(1-self.activations)
+        gradient = self.activations*(1-self.activations)
         previous_error_tensor = error_tensor * gradient
         return previous_error_tensor
