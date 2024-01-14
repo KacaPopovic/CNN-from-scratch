@@ -64,12 +64,20 @@ class NeuralNetwork:
         # First to compute the error is loss layer, which is why it receives the label tensor.
         error_tensor = self.loss_layer.backward(self.label_tensor)
         # We go backward through all the layers and propagate the error.
-        for i in range(len(self.layers)-1, -1, -1):
-            if self.layers[i].optimizer:
-                if self.layers[i].optimizer.regularizer:
-                    # todo da li mora da se proveri trainable
-                    error_tensor += self.layers[i].optimizer.regularizer.norm(self.layers[i].weights)
+        for i in range(len(self.layers) - 1, -1, -1):
+            # If we have regularizer, we add regularization loss to the data loss.
+            if self.layers[i].trainable:
+                if self.layers[i].optimizer:
+                    if isinstance(self.layers[i].optimizer, tuple):
+                        if self.layers[i].optimizer[0].regularizer:
+                            # Because Conv Layer has in optimizer saved optimizers for weights and bias.
+                            error_tensor += self.layers[i].optimizer[0].regularizer.norm(self.layers[i].weights)
+                    else:
+                        if self.layers[i].optimizer.regularizer:
+                            reg = self.layers[i].optimizer.regularizer.norm(self.layers[i].weights)
+                            error_tensor += self.layers[i].optimizer.regularizer.norm(self.layers[i].weights)
             error_tensor = self.layers[i].backward(error_tensor)
+
         return error_tensor
 
     def append_layer(self, layer):
@@ -100,7 +108,7 @@ class NeuralNetwork:
             None
         """
         # We save the loss calculated in each iteration.
-        self.phase(False)
+        self.phase = False
         for i in range(iterations):
             loss = self.forward()
             self.loss.append(loss)
@@ -117,7 +125,7 @@ class NeuralNetwork:
             np.ndarray: Tensor with predicted probabilities.
         """
         # We propagate the input tensor through all the layers.
-        self.phase(True)
+        self.phase = True
         for i in range(len(self.layers)):
             input_tensor = self.layers[i].forward(input_tensor)
         output_tensor = input_tensor

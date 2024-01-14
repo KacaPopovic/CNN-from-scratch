@@ -8,7 +8,8 @@ class BatchNormalization(BaseLayer):
         super().__init__()
         self.channels = channels
         self.trainable = True
-        self.weights, self.bias = self.initialize()
+        self.weights = np.ones(self.channels)
+        self.bias = np.zeros(self.channels)
         self.mean = None
         self.variance = None
         self.normalized_tensor = None
@@ -22,10 +23,11 @@ class BatchNormalization(BaseLayer):
         self.gradient_weights = None
 
 
-    def initialize(self):
-        weights = np.ones(self.channels)
-        bias = np.zeros(self.channels)
-        return weights, bias
+    def initialize(self, weights_initializer, bias_initializer):
+        fan_in = self.channels
+        fan_out = self.channels
+        self.weights = weights_initializer.initialize(self.weights.shape, fan_in, fan_out)
+        self.bias = bias_initializer.initialize(self.bias.shape, fan_in,fan_out)
 
     @property
     def optimizer(self):
