@@ -46,11 +46,21 @@ class NeuralNetwork:
         # We load the data from data layer.
         input_tensor, label_tensor = self.data_layer.next()
         self.label_tensor = label_tensor
+        regularization_loss = 0
         # We pass forward through all the layers
         for i in range(len(self.layers)):
             input_tensor = self.layers[i].forward(input_tensor)
+            if self.layers[i].trainable:
+                if isinstance(self.layers[i].optimizer, tuple):
+                        if self.layers[i].optimizer[0].regularizer:
+         #Because Conv Layer has in optimizer saved optimizers for weights and bias.
+                            regularization_loss += self.layers[i].optimizer[0].regularizer.norm(self.layers[i].weights)
+                else:
+                    if self.layers[i].optimizer.regularizer:
+                        regularization_loss += self.layers[i].optimizer.regularizer.norm(self.layers[i].weights)
+
         output_tensor = input_tensor
-        self.current_loss = self.loss_layer.forward(output_tensor, self.label_tensor)
+        self.current_loss = self.loss_layer.forward(output_tensor, self.label_tensor) + regularization_loss
         return self.current_loss
 
     def backward(self):
@@ -66,16 +76,16 @@ class NeuralNetwork:
         # We go backward through all the layers and propagate the error.
         for i in range(len(self.layers) - 1, -1, -1):
             # If we have regularizer, we add regularization loss to the data loss.
-            if self.layers[i].trainable:
-                if self.layers[i].optimizer:
-                    if isinstance(self.layers[i].optimizer, tuple):
-                        if self.layers[i].optimizer[0].regularizer:
+            #if self.layers[i].trainable:
+              #  if self.layers[i].optimizer:
+               #     if isinstance(self.layers[i].optimizer, tuple):
+                #        if self.layers[i].optimizer[0].regularizer:
                             # Because Conv Layer has in optimizer saved optimizers for weights and bias.
-                            error_tensor += self.layers[i].optimizer[0].regularizer.norm(self.layers[i].weights)
-                    else:
-                        if self.layers[i].optimizer.regularizer:
-                            reg = self.layers[i].optimizer.regularizer.norm(self.layers[i].weights)
-                            error_tensor += self.layers[i].optimizer.regularizer.norm(self.layers[i].weights)
+                 #           error_tensor += self.layers[i].optimizer[0].regularizer.norm(self.layers[i].weights)
+                  #  else:
+                   #     if self.layers[i].optimizer.regularizer:
+                    #        reg = self.layers[i].optimizer.regularizer.norm(self.layers[i].weights)
+                     #       error_tensor += self.layers[i].optimizer.regularizer.norm(self.layers[i].weights)
             error_tensor = self.layers[i].backward(error_tensor)
 
         return error_tensor
