@@ -18,11 +18,18 @@ class FullyConnected(BaseLayer):
         super().__init__()
         self.trainable = True
         # bias is included in the weights, so the size is increased by 1
-        self.weights = np.random.uniform(0, 1, size=(input_size + 1, output_size))
+        self._weights = np.random.uniform(0, 1, size=(input_size + 1, output_size))
         self._optimizer = None
         self.input_tensor = None
         self.gradient_tensor = None
 
+    @property
+    def weights(self):
+        return self._weights
+
+    @weights.setter
+    def weights(self, weights):
+        self._weights = weights
     def forward(self, input_tensor):
         """
         Calculates the output of the layer in the forward pass, by multiplying input tensor and weights of the layer.
@@ -105,4 +112,3 @@ class FullyConnected(BaseLayer):
         if self.optimizer:
             updated_weight_tensor = self.optimizer.calculate_update(self.weights, gradient_tensor)
             self.weights = updated_weight_tensor
-

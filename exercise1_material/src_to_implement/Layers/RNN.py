@@ -6,7 +6,6 @@ from . TanH import TanH
 import sys
 import copy
 sys.path.append('C:/Users/Admin/Documents/GitHub/DeepLearningFAU')
-from exercise1_material.src_to_implement.Optimization.Optimizers import Adam, Sgd
 
 
 class RNN(BaseLayer):
@@ -31,6 +30,32 @@ class RNN(BaseLayer):
         self.sigmoid_activations = None
         self.hidden_inputs = None
         self.output_inputs = None
+        self._optimizer = None
+        self.gradient_weights_hidden = None
+        self.gradient_weights_output = None
+
+    @property
+    def optimizer(self):
+        """
+        Getter for attribute _optimizer.
+
+        Returns:
+            Sgd: Optimizer of the layer.
+        """
+        return self._optimizer
+
+    @optimizer.setter
+    def optimizer(self, optimizer):
+        """
+        Setter for attribute _optimizer.
+
+        Args:
+            optimizer(Sgd): New optimizer for the layer.
+
+        Returns:
+            None
+        """
+        self._optimizer = optimizer
 
     @property
     def memorize(self):
@@ -42,11 +67,11 @@ class RNN(BaseLayer):
 
     @property
     def gradient_weights(self):
-        return self.fc_hidden.gradient_weights
+        return self.fc_output.weights
 
     @property
     def weights(self):
-        return self._weights
+        return self.fc_output.weights
 
     @weights.setter
     def weights(self, weights):
@@ -148,12 +173,14 @@ class RNN(BaseLayer):
             previous_error = self.fc_hidden.backward(previous_error)
 
             # Unpack all gradient.
-            gradient_weights = self.gradient_weights
+            gradient_weights = self.fc_hidden.gradient_weights
             gradient_output = self.fc_output.gradient_weights
 
             # Accumulate the gradients.
             accumulated_weights_gradient += gradient_weights
             accumulated_output_gradient += gradient_output
+            self.gradient_weights_hidden = accumulated_weights_gradient
+            self.gradient_weights_output = accumulated_output_gradient
 
             # Save gradient w.r.t. ht for the computations for sample t-1 (we need it for BP for copy function).
             self.current_hidden_error = previous_error[:, :self.hidden_size]
@@ -162,18 +189,18 @@ class RNN(BaseLayer):
             previous_error_tensor[i, :] = previous_error[:, self.hidden_size:self.hidden_size + self.input_size]
 
         # Update weights in FC layers.
-        optimizer_hidden = Sgd(1e-3)
+        optimizer_hidden = copy.deepcopy(self.optimizer)
         self.fc_hidden.optimizer = optimizer_hidden
-        self.fc_hidden.optimize(accumulated_weights_gradient)
-        self.fc_hidden.optimizer = None
+        if self.optimizer:
+            updated_weight_tensor = self.optimizer.calculate_update(self.fc_hidden.weights, accumulated_weights_gradient)
+            self.weights = updated_weight_tensor
+            self.fc_hidden.weights = updated_weight_tensor
 
-        optimizer_output = Sgd(1e-3)
+        optimizer_output = copy.deepcopy(self.optimizer)
         self.fc_output.optimizer = optimizer_output
-        self.fc_output.optimize(accumulated_output_gradient)
-        self.fc_output.optimizer = None
-
-        # Set weights of RNN to the updated values.
-        self.weights = self.fc_hidden.weights
-        self.weights_output = self.fc_output.weights
+        if self.optimizer:
+            updated_weight_tensor = self.optimizer.calculate_update(self.fc_output.weights, accumulated_output_gradient)
+            self.fc_output.weights = updated_weight_tensor
+            self.weights_output = updated_weight_tensor
 
         return previous_error_tensor
