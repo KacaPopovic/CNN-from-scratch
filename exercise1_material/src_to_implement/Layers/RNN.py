@@ -3,9 +3,6 @@ from . Base import BaseLayer
 from . FullyConnected import FullyConnected
 from . Sigmoid import Sigmoid
 from . TanH import TanH
-import sys
-import copy
-sys.path.append('C:/Users/Admin/Documents/GitHub/DeepLearningFAU')
 
 
 class RNN(BaseLayer):
@@ -18,7 +15,7 @@ class RNN(BaseLayer):
         self.hidden_state = np.zeros(shape=(1, self.hidden_size))
         self._memorize = False
         self._weights = np.random.uniform(0, 1, size=(self.hidden_size + self.input_size + 1, self.hidden_size))
-        self.weights_output = np.random.uniform(0, 1, size=(self.output_size + 1, self.hidden_size))
+        self.weights_output = np.random.uniform(0, 1, size=(self.hidden_size + 1, self.output_size))
         self.fc_hidden = None
         self.fc_output = None
         self.sigmoid = None
@@ -31,7 +28,7 @@ class RNN(BaseLayer):
         self.hidden_inputs = None
         self.output_inputs = None
         self._optimizer = None
-        self.gradient_weights_hidden = None
+        self._gradient_weights = None
         self.gradient_weights_output = None
 
     @property
@@ -67,11 +64,15 @@ class RNN(BaseLayer):
 
     @property
     def gradient_weights(self):
-        return self.fc_output.weights
+        return self._gradient_weights
+
+    @gradient_weights.setter
+    def gradient_weights(self, weights):
+        self._gradient_weights = weights
 
     @property
     def weights(self):
-        return self.fc_output.weights
+        return self._weights
 
     @weights.setter
     def weights(self, weights):
@@ -87,8 +88,12 @@ class RNN(BaseLayer):
         fan_in = self.hidden_size + self.input_size + 1
         fan_out = self.hidden_size
         self.weights = weight_initializer.initialize(self.weights.shape, fan_in, fan_out)
+        self.weights_output = weight_initializer.initialize(self.weights_output.shape, fan_in, fan_out)
+        self.fc_hidden.weights = self.weights
+        self.fc_output.weights = self.weights_output
 
     def forward(self, input_tensor):
+
         self.input_tensor = input_tensor
 
         sigmoid_activations = np.zeros(shape=(self.input_tensor.shape[0], self.output_size))
@@ -107,8 +112,6 @@ class RNN(BaseLayer):
             current_input_tensor = input_tensor[i, :]
             current_input_tensor = np.transpose(current_input_tensor.reshape(-1, 1))
             input_hidden = np.concatenate((self.hidden_state, current_input_tensor), axis=1)
-            # input_hidden = np.append(input_hidden, np.ones((input_hidden.shape[0], 1)), axis=1)
-            # TODO: Mozda treba izbaciti posl liniju!!
 
             # Compute hidden state.
             hidden_state = self.tanh.forward(self.fc_hidden.forward(input_hidden))
@@ -137,13 +140,12 @@ class RNN(BaseLayer):
 
     def backward(self, error_tensor):
 
-        accumulated_weights_gradient = 0
-        accumulated_output_gradient = 0
+        accumulated_weights_gradient = np.zeros_like(self.weights)
+        accumulated_output_gradient = np.zeros_like(self.weights_output)
 
         previous_error_tensor = np.zeros_like(self.input_tensor)
         self.current_hidden_error = 0
         for i in reversed(range(len(self.input_tensor))):
-
             # Set the activations of the activation layers.
             current_activation = self.tanh_activations[i, :]
             current_activation = np.transpose(current_activation.reshape(-1, 1))
@@ -179,8 +181,6 @@ class RNN(BaseLayer):
             # Accumulate the gradients.
             accumulated_weights_gradient += gradient_weights
             accumulated_output_gradient += gradient_output
-            self.gradient_weights_hidden = accumulated_weights_gradient
-            self.gradient_weights_output = accumulated_output_gradient
 
             # Save gradient w.r.t. ht for the computations for sample t-1 (we need it for BP for copy function).
             self.current_hidden_error = previous_error[:, :self.hidden_size]
@@ -188,17 +188,17 @@ class RNN(BaseLayer):
             # Save error tensor.
             previous_error_tensor[i, :] = previous_error[:, self.hidden_size:self.hidden_size + self.input_size]
 
+        self.gradient_weights = accumulated_weights_gradient
+        self.fc_hidden.gradient_weights = accumulated_weights_gradient
+        self.gradient_weights_output = accumulated_output_gradient
+        self.fc_output.gradient_weights = accumulated_output_gradient
+
         # Update weights in FC layers.
-        optimizer_hidden = copy.deepcopy(self.optimizer)
-        self.fc_hidden.optimizer = optimizer_hidden
+
         if self.optimizer:
             updated_weight_tensor = self.optimizer.calculate_update(self.fc_hidden.weights, accumulated_weights_gradient)
             self.weights = updated_weight_tensor
             self.fc_hidden.weights = updated_weight_tensor
-
-        optimizer_output = copy.deepcopy(self.optimizer)
-        self.fc_output.optimizer = optimizer_output
-        if self.optimizer:
             updated_weight_tensor = self.optimizer.calculate_update(self.fc_output.weights, accumulated_output_gradient)
             self.fc_output.weights = updated_weight_tensor
             self.weights_output = updated_weight_tensor
